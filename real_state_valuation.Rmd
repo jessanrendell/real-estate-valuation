@@ -1,0 +1,128 @@
+---
+title: "Real Estate Valuation"
+output:
+  html_document:
+    df_print: paged
+---
+
+The real estate data were collected in Sindian District, New Taipei City, Taiwan in an attempt to measure how certain variables affect real estate prices.
+
+<br>
+
+#### Attributes
+
+**Features**
+
+*dbl* `transaction_date`: the date of the transaction  
+*dbl* `age`: the age of the real estate  
+*dbl* `distance_to_train_station`: the distance from the real estate to the nearest train station  
+*int* `convenience_stores`: the number of convenience stores around the real estate within a constant radius  
+*dbl* `latitude`: the latitude coordinate of the real estate  
+*dbl* `longitude`: the longitude coordinate of the real estate  
+
+**Labels** 
+
+*dbl* `price`: the purchase price of the real estate  
+
+<br>
+
+- - -
+
+### Loading the data set
+
+Use `setwd()` to set the current directory to the folder. Then load the data set by running the code below.
+
+```{r}
+houses <- read.csv('real_estate_valuation.csv', fileEncoding="UTF-8-BOM")
+head(houses)
+```
+
+<br>
+
+### Plotting the data
+
+Notice that the variables `distance_to_nearest_train_station`, `latitude`, and `longitude` show nonlinearity when plotted against `price`.
+
+```{r plots}
+par(mfrow = c(1, 6))
+plot(price ~ transaction_date, houses)
+plot(price ~ age, houses)
+plot(price ~ distance_to_train_station, houses)
+plot(price ~ convenience_stores, houses)
+plot(price ~ latitude, houses)
+plot(price ~ longitude, houses)
+```
+
+<br>
+
+### Model selection
+
+All variables are plugged in to the regression model. Since some variables exhibit nonlinearity, a quadratic term for each variable will be added to the model.
+
+```{r}
+model = lm(
+  price ~
+    transaction_date + I(transaction_date ^ 2) +
+    age + I(age ^ 2) +
+    distance_to_train_station + I(distance_to_train_station ^ 2) +
+    convenience_stores + I(convenience_stores ^ 2) +
+    latitude + I(latitude ^ 2) +
+    longitude + I(longitude ^ 2),
+  houses
+)
+summary(model)
+```
+
+The quadratic terms of variables `transaction_date`, `convenience_stores`, and `longitude` will be eliminated from the model due to either large p-values or singularity.
+
+```{r}
+model = lm(
+  price ~
+    transaction_date +
+    age + I(age ^ 2) +
+    distance_to_train_station + I(distance_to_train_station ^ 2) +
+    convenience_stores +
+    latitude + I(latitude ^ 2) +
+    longitude,
+  houses
+)
+summary(model)
+```
+
+`longitude` is insignificant to the model so it will be removed from the model as well.
+
+```{r}
+model = lm(
+  price ~
+    transaction_date +
+    distance_to_train_station + I(distance_to_train_station ^ 2) +
+    age + I(age ^ 2) +
+    convenience_stores +
+    latitude + I(latitude ^ 2),
+  houses
+)
+summary(model)
+```
+
+Now all the remaining variables are significant. No more variable needs to be removed from the model.
+
+<br>
+
+- - -
+
+#### Code authorship
+
+2021 © Jessan Rendell G. Belenzo
+
+<br>
+
+#### Terms of use
+
+Licensed under the GNU General Public License v3.0. See [LICENSE](https://github.com/jessanrendell/real-estate-valuation/blob/main/LICENSE).
+
+<br>
+
+#### Data set
+
+Yeh, I. C., & Hsu, T. K. (2018). *Building real estate valuation models with comparative approach through case-based reasoning*. Applied Soft Computing, 65, 260-271.  
+Dua, D. and Graff, C. (2019). [*UCI Machine Learning Repository*](http://archive.ics.uci.edu/ml). Irvine, CA: University of California, School of Information and Computer Science.
